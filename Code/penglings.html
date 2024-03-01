@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pengling Body Mass Prediction</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<script>
+  // Set up dimensions
+  const width = 600;
+  const height = 400;
+
+  // Define scales and color scale
+  const xScale = d3.scaleLinear().range([0, width]);
+  const yScale = d3.scaleLinear().range([height, 0]);
+  const colorScale = d3.scaleOrdinal().range(['#FBA043', '#469F9F', '#9935CC']);
+
+  // Create SVG container
+  const svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  // Load data from CSV
+  d3.csv("penglings1.csv").then(function(data) {
+    // Set domains for scales
+    xScale.domain(d3.extent(data, d => +d.flipper_length_mm));
+    yScale.domain(d3.extent(data, d => +d.body_mass_g));
+    colorScale.domain(data.map(d => d.species));
+
+    // Draw gridlines
+    svg.append("g")
+      .selectAll("line")
+      .data(xScale.ticks())
+      .enter().append("line")
+      .attr("x1", d => xScale(d))
+      .attr("x2", d => xScale(d))
+      .attr("y1", 0)
+      .attr("y2", height)
+      .attr("stroke", "#ddd")
+      .attr("stroke-width", 0.5);
+
+    svg.append("g")
+      .selectAll("line")
+      .data(yScale.ticks())
+      .enter().append("line")
+      .attr("y1", d => yScale(d))
+      .attr("y2", d => yScale(d))
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("stroke", "#ddd")
+      .attr("stroke-width", 0.5);
+
+    // Draw scatter plot with variable dot size
+    svg.selectAll("circle")
+      .data(data)
+      .enter().append("circle")
+      .attr("cx", d => xScale(+d.flipper_length_mm))
+      .attr("cy", d => yScale(+d.body_mass_g))
+      .attr("r", d => {
+        // Interpolate dot size based on bill length
+        return d3.interpolate(6, 7)(Math.abs(45 - d.bill_length_mm) / 5); // Adjust the range according to your preference
+      })
+      .attr("fill", d => colorScale(d.species))
+      .attr("opacity", 0.8);
+
+    // Add axes
+svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+  .call(d3.axisBottom(xScale).tickSizeOuter(0))
+  .append("text")
+  .attr("x", width / 2)
+  .attr("y", -5) // Adjusted y position for x-axis label
+  .attr("fill", "black")
+  .style("text-anchor", "middle")
+  .text("Flipper Length (mm)");
+
+svg.append("g")
+  .call(d3.axisLeft(yScale).tickSizeOuter(0))
+  .append("text")
+  .attr("transform", "rotate(-90)")
+  .attr("y", 18) // Adjusted y position for y-axis label
+  .attr("x", -height / 2)
+  .attr("fill", "black")
+  .style("text-anchor", "middle")
+  .text("Body Mass (g)");
+
+    // Add title
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", 20)
+      .attr("fill", "black")
+      .style("text-anchor", "middle")
+      .style("font-size", "20px")
+      .text("Pengling Body Mass Prediction");
+  }).catch(error => console.error("Error loading data:", error));
+</script>
+
+</body>
+</html>
